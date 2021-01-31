@@ -10,7 +10,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzers
 {
     /// <summary>
-    /// abc
+    /// Analyzer which checks that all declaration types defined in <see cref="CheckingNodes"/> have xml comments
+    /// defined.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class NoXmlCommentAnalyzer : DiagnosticAnalyzer
@@ -18,7 +19,7 @@ namespace Analyzers
         private const string Title = "Missing XML Comment.";
         private const string MessageFormat = "Element needs to have an xml comment.";
         private const string Description = "Missing XML Comment.";
-        public const string RuleId = "XmlMissing";
+        public const string RuleId = "XmlMissing100";
 
         private static readonly SyntaxKind[] CheckingNodes =
         {
@@ -38,15 +39,15 @@ namespace Analyzers
             SyntaxKind.InterfaceDeclaration
         };
 
-        private static readonly DiagnosticDescriptor Rule =
-            new DiagnosticDescriptor(
-                RuleId,
-                Title,
-                MessageFormat,
-                "XMLAnalyzer",
-                DiagnosticSeverity.Error,
-                true,
-                Description);
+        private static readonly DiagnosticDescriptor Rule = new(
+            RuleId,
+            Title,
+            MessageFormat,
+            "XmlDocumentation",
+            DiagnosticSeverity.Warning,
+            true,
+            Description
+        );
 
         /// <inheritdoc />
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
@@ -65,7 +66,6 @@ namespace Analyzers
                         return;
                     }
 
-                    // Ignore if no xml comment exists.
                     if (!syntaxNode.HasLeadingTrivia)
                     {
                         ReportOnIdentifierToken(syntaxNode, startCodeBlockContext);

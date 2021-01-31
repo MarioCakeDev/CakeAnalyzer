@@ -10,7 +10,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzers
 {
     /// <summary>
-    /// abc
+    /// Analyzer which checks that all declaration types defined in <see cref="CheckingNodes"/> which have xml comments
+    /// have all tags filled.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EmptyXmlTagAnalyzer : DiagnosticAnalyzer
@@ -18,17 +19,17 @@ namespace Analyzers
         private const string Title = "Fill empty XML Tag.";
         private const string MessageFormat = "XML Tag is not allowed to be empty.";
         private const string Description = "Fill empty XML Tag.";
-        public const string RuleId = "XmlTagEmpty";
+        public const string RuleId = "XmlTagEmpty100";
 
-        private static readonly DiagnosticDescriptor Rule =
-            new DiagnosticDescriptor(
-                RuleId,
-                Title,
-                MessageFormat,
-                "XMLAnalyzer",
-                DiagnosticSeverity.Warning,
-                true,
-                Description);
+        private static readonly DiagnosticDescriptor Rule = new(
+            RuleId,
+            Title,
+            MessageFormat,
+            "XmlDocumentation",
+            DiagnosticSeverity.Warning,
+            true,
+            Description
+        );
 
         private static readonly SyntaxKind[] CheckingNodes =
         {
@@ -73,7 +74,8 @@ namespace Analyzers
 
                     SyntaxTriviaList syntaxTriviaList = syntaxNode.GetLeadingTrivia();
                     SyntaxTrivia xmlComment = syntaxTriviaList.FirstOrDefault(trivia =>
-                        trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
+                        trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) || 
+                        trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia));
                     // Ignore if no xml comment exists.
                     if (xmlComment == default)
                     {
@@ -122,7 +124,7 @@ namespace Analyzers
                 CheckingNodes
             );
         }
-        
+
         private bool ShouldCheckXmlComment(SyntaxNode syntaxNode)
         {
             return IsPublic(syntaxNode) ||

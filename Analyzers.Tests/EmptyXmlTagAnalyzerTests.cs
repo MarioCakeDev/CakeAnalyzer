@@ -377,5 +377,18 @@ class C
 
             await Verify.VerifyAnalyzerAsync(test);
         }
+        
+        [Fact]
+        public async Task Does_Not_Find_DiagnosticResult_On_Empty_InheritDoc_Tag()
+        {
+            const string test = @"
+class C
+{
+    /// <inheritdoc />
+    public int f;
+}";
+
+            await Verify.VerifyAnalyzerAsync(test);
+        }
     }
 }
