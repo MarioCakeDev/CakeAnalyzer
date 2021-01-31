@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzers
 {
     /// <summary>
-    /// abcd
+    /// abc
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EmptyXmlTagAnalyzer : DiagnosticAnalyzer
