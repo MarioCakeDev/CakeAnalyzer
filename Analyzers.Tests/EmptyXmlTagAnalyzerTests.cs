@@ -56,45 +56,6 @@ class C
             await Verify.VerifyAnalyzerAsync(test, expected);
         }
 
-        [Fact]
-        public async Task Does_Not_Find_DiagnosticResult_With_Filled_SingeLine_Comment()
-        {
-            const string test = @"
-/// <summary>ABC</summary>
-class C
-{
-}";
-
-            await Verify.VerifyAnalyzerAsync(test);
-        }
-
-        [Fact]
-        public async Task Does_Not_Find_DiagnosticResult_With_Filled_Multiline_Comment()
-        {
-            const string test = @"
-/** <summary>ABC</summary> **/
-class C
-{
-}";
-
-            await Verify.VerifyAnalyzerAsync(test);
-        }
-
-        [Fact]
-        public async Task Finds_DiagnosticResult_With_Multiline_Comment()
-        {
-            const string test = @"
-/** <summary></summary> **/
-class C
-{
-}";
-            DiagnosticResult[] expected =
-            {
-                Verify.Diagnostic(RuleId).WithSpan(2, 5, 2, 24)
-            };
-            await Verify.VerifyAnalyzerAsync(test, expected);
-        }
-
         [Theory]
         [InlineData("public")]
         [InlineData("internal")]
@@ -281,7 +242,7 @@ class C
                 await Verify.VerifyAnalyzerAsync(test);
             }
         }
-
+        
         [Theory]
         [InlineData("public", true)]
         [InlineData("private", false)]
@@ -306,7 +267,7 @@ class C
                 await Verify.VerifyAnalyzerAsync(test);
             }
         }
-
+        
         [Theory]
         [InlineData("public", true)]
         [InlineData("private", false)]
@@ -331,7 +292,7 @@ class C
                 await Verify.VerifyAnalyzerAsync(test);
             }
         }
-
+        
         [Fact]
         public async Task Finds_DiagnosticResult_On_Destructor()
         {
@@ -341,7 +302,7 @@ class C
     /// <summary />
     ~C(){}
 }";
-
+            
             await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
@@ -416,7 +377,7 @@ class C
 
             await Verify.VerifyAnalyzerAsync(test);
         }
-
+        
         [Fact]
         public async Task Does_Not_Find_DiagnosticResult_On_Empty_InheritDoc_Tag()
         {
