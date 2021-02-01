@@ -183,13 +183,13 @@ class C
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Method(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Method(string visibility)
         {
             string test = $@"
 class C
@@ -197,24 +197,18 @@ class C
     /// <summary />
     {visibility} void M(){{}}
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Property(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Property(string visibility)
         {
             string test = $@"
 class C
@@ -222,24 +216,18 @@ class C
     /// <summary />
     {visibility} int P {{ get; set; }}
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Constructor(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Constructor(string visibility)
         {
             string test = $@"
 class C
@@ -247,24 +235,18 @@ class C
     /// <summary />
     {visibility} C(){{}}
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_EventField(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_EventField(string visibility)
         {
             string test = $@"
 class C
@@ -272,24 +254,17 @@ class C
     /// <summary />
     {visibility} event System.Action Event;
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Event(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Event(string visibility)
         {
             string test = $@"
 class C
@@ -297,24 +272,18 @@ class C
     /// <summary />
     {visibility} event System.Action Event{{ add{{}} remove{{}} }}
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Delegate(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Delegate(string visibility)
         {
             string test = $@"
 class C
@@ -322,14 +291,8 @@ class C
     /// <summary />
     {visibility} delegate void Delegate();
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Fact]
@@ -346,13 +309,13 @@ class C
         }
 
         [Theory]
-        [InlineData("public", true)]
-        [InlineData("private", false)]
-        [InlineData("protected", true)]
-        [InlineData("internal", true)]
-        [InlineData("protected internal", true)]
-        [InlineData("private protected", true)]
-        public async Task Finds_DiagnosticResult_On_Indexer(string visibility, bool findsError)
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Indexer(string visibility)
         {
             string test = $@"
 class C
@@ -360,14 +323,8 @@ class C
     /// <summary />
     {visibility} int this[int a] {{ get => a; }}
 }}";
-            if (findsError)
-            {
-                await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
-            }
-            else
-            {
-                await Verify.VerifyAnalyzerAsync(test);
-            }
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Fact]
@@ -405,7 +362,7 @@ enum E
         [InlineData("internal")]
         [InlineData("protected internal")]
         [InlineData("private protected")]
-        public async Task Does_Not_Find_DiagnosticResult_On_Field(string visibility)
+        public async Task Finds_DiagnosticResult_On_Field(string visibility)
         {
             string test = $@"
 class C
@@ -414,7 +371,7 @@ class C
     {visibility} int f;
 }}";
 
-            await Verify.VerifyAnalyzerAsync(test);
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
 
         [Fact]

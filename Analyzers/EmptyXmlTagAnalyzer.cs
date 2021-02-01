@@ -10,8 +10,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzers
 {
     /// <summary>
-    /// Analyzer which checks that all declaration types defined in <see cref="CheckingNodes"/> which have xml comments
-    /// have all tags filled.
+    /// Analyzer which checks that XML Comments have no empty tags defined.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EmptyXmlTagAnalyzer : DiagnosticAnalyzer
@@ -31,24 +30,6 @@ namespace Analyzers
             Description
         );
 
-        private static readonly SyntaxKind[] CheckingNodes =
-        {
-            SyntaxKind.ClassDeclaration,
-            SyntaxKind.MethodDeclaration,
-            SyntaxKind.PropertyDeclaration,
-            SyntaxKind.ConstructorDeclaration,
-            SyntaxKind.EnumDeclaration,
-            SyntaxKind.EnumMemberDeclaration,
-            SyntaxKind.IndexerDeclaration,
-            SyntaxKind.OperatorDeclaration,
-            SyntaxKind.StructDeclaration,
-            SyntaxKind.DestructorDeclaration,
-            SyntaxKind.EventFieldDeclaration,
-            SyntaxKind.EventDeclaration,
-            SyntaxKind.DelegateDeclaration,
-            SyntaxKind.InterfaceDeclaration
-        };
-
         /// <inheritdoc />
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
 
@@ -57,130 +38,57 @@ namespace Analyzers
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
-            context.RegisterSyntaxNodeAction(startCodeBlockContext =>
-                {
-                    SyntaxNode syntaxNode = startCodeBlockContext.Node;
-                    bool shouldCheckXmlComment = ShouldCheckXmlComment(syntaxNode);
-                    if (!shouldCheckXmlComment)
-                    {
-                        return;
-                    }
-
-                    // Ignore if no xml comment exists.
-                    if (!syntaxNode.HasLeadingTrivia)
-                    {
-                        return;
-                    }
-
-                    SyntaxTriviaList syntaxTriviaList = syntaxNode.GetLeadingTrivia();
-                    SyntaxTrivia xmlComment = syntaxTriviaList.FirstOrDefault(trivia =>
-                        trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) || 
-                        trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia));
-                    // Ignore if no xml comment exists.
-                    if (xmlComment == default)
-                    {
-                        return;
-                    }
-
-                    DocumentationCommentTriviaSyntax comment =
-                        (DocumentationCommentTriviaSyntax) xmlComment.GetStructure();
-
-                    IEnumerable<XmlNodeSyntax> xmlElements = comment!.Content.SelectMany(element =>
-                    {
-                        if (element is XmlEmptyElementSyntax emptyElement)
-                        {
-                            return emptyElement.Name.LocalName.ToString() == "inheritdoc"
-                                ? new XmlNodeSyntax[0]
-                                : new[] {emptyElement};
-                        }
-
-                        if (!(element is XmlElementSyntax xmlElement))
-                        {
-                            return new XmlNodeSyntax[0];
-                        }
-
-                        bool hasAny = xmlElement.Content.Any();
-                        if (!hasAny)
-                        {
-                            return new[] {xmlElement};
-                        }
-
-                        bool areAllNodesEmpty = xmlElement.Content.All(node =>
-                            node is XmlTextSyntax textSyntax &&
-                            textSyntax.TextTokens.All(
-                                textToken => String.IsNullOrWhiteSpace(textToken.Text)
-                            )
-                        );
-
-                        return areAllNodesEmpty ? new[] {xmlElement} : new XmlNodeSyntax[0];
-                    });
-
-                    foreach (XmlNodeSyntax xmlElementSyntax in xmlElements)
-                    {
-                        Diagnostic diagnostic = Diagnostic.Create(Rule, xmlElementSyntax.GetLocation());
-                        startCodeBlockContext.ReportDiagnostic(diagnostic);
-                    }
-                },
-                CheckingNodes
+            context.RegisterSyntaxNodeAction(AnalyzeCommentForEmptyTag,
+                SyntaxKind.SingleLineDocumentationCommentTrivia,
+                SyntaxKind.MultiLineDocumentationCommentTrivia
             );
         }
 
-        private bool ShouldCheckXmlComment(SyntaxNode syntaxNode)
+        private static void AnalyzeCommentForEmptyTag(SyntaxNodeAnalysisContext startCodeBlockContext)
         {
-            return IsPublic(syntaxNode) ||
-                   IsProtected(syntaxNode) ||
-                   IsClass(syntaxNode) ||
-                   IsInterface(syntaxNode) ||
-                   IsEnum(syntaxNode) ||
-                   IsStruct(syntaxNode) ||
-                   IsInternal(syntaxNode) ||
-                   IsEnumMember(syntaxNode) ||
-                   IsDestructor(syntaxNode);
+            DocumentationCommentTriviaSyntax syntaxNode = (DocumentationCommentTriviaSyntax)startCodeBlockContext.Node;
+            
+            IEnumerable<XmlNodeSyntax> xmlElements = GetEmptyXmlElements(syntaxNode);
+
+            foreach (XmlNodeSyntax xmlElementSyntax in xmlElements)
+            {
+                Diagnostic diagnostic = Diagnostic.Create(Rule, xmlElementSyntax.GetLocation());
+                startCodeBlockContext.ReportDiagnostic(diagnostic);
+            }
         }
 
-        private bool IsDestructor(SyntaxNode syntaxNode)
+        private static IEnumerable<XmlNodeSyntax> GetEmptyXmlElements(DocumentationCommentTriviaSyntax comment)
         {
-            return syntaxNode.IsKind(SyntaxKind.DestructorDeclaration);
-        }
+            IEnumerable<XmlNodeSyntax> xmlElements = comment!.Content.SelectMany(element =>
+            {
+                if (element is XmlEmptyElementSyntax emptyElement)
+                {
+                    return emptyElement.Name.LocalName.ToString() == "inheritdoc"
+                        ? new XmlNodeSyntax[0]
+                        : new[] {emptyElement};
+                }
 
-        private bool IsEnumMember(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.IsKind(SyntaxKind.EnumMemberDeclaration);
-        }
+                if (element is not XmlElementSyntax xmlElement)
+                {
+                    return new XmlNodeSyntax[0];
+                }
 
-        private bool IsStruct(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.Kind() == SyntaxKind.StructDeclaration;
-        }
+                bool hasAny = xmlElement.Content.Any();
+                if (!hasAny)
+                {
+                    return new[] {xmlElement};
+                }
 
-        private bool IsEnum(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.Kind() == SyntaxKind.EnumDeclaration;
-        }
+                bool areAllNodesEmpty = xmlElement.Content.All(node =>
+                    node is XmlTextSyntax textSyntax &&
+                    textSyntax.TextTokens.All(
+                        textToken => String.IsNullOrWhiteSpace(textToken.Text)
+                    )
+                );
 
-        private bool IsInterface(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.Kind() == SyntaxKind.InterfaceDeclaration;
-        }
-
-        private bool IsClass(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.Kind() == SyntaxKind.ClassDeclaration;
-        }
-
-        private bool IsProtected(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.ChildTokens().Any(token => token.IsKind(SyntaxKind.ProtectedKeyword));
-        }
-
-        private bool IsPublic(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.ChildTokens().Any(token => token.IsKind(SyntaxKind.PublicKeyword));
-        }
-
-        private bool IsInternal(SyntaxNode syntaxNode)
-        {
-            return syntaxNode.ChildTokens().Any(token => token.IsKind(SyntaxKind.InternalKeyword));
+                return areAllNodesEmpty ? new[] {xmlElement} : new XmlNodeSyntax[0];
+            });
+            return xmlElements;
         }
     }
 }
