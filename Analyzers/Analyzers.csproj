@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <RootNamespace>Analyzers</RootNamespace>
         <LangVersion>9</LangVersion>
     </PropertyGroup>
@@ -16,11 +16,11 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.8.0" PrivateAssets="all"/>
-        <PackageReference Update="NETStandard.Library" PrivateAssets="all" />
+        <PackageReference Update="NETStandard.Library" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
-        <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
-        <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+        <AdditionalFiles Include="AnalyzerReleases.Shipped.md"/>
+        <AdditionalFiles Include="AnalyzerReleases.Unshipped.md"/>
     </ItemGroup>
 </Project>
