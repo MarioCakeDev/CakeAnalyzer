@@ -200,6 +200,41 @@ class C
 
             await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
         }
+        
+        [Theory]
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("protected")]
+        [InlineData("internal")]
+        [InlineData("protected internal")]
+        [InlineData("private protected")]
+        public async Task Finds_DiagnosticResult_On_Method_In_Interface(string visibility)
+        {
+            string test = $@"
+interface I
+{{
+    /// <summary />
+    {visibility} void M(){{}}
+}}";
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
+        }
+        
+        [Theory]
+        [InlineData("public")]
+        [InlineData("private")]
+        [InlineData("internal")]
+        public async Task Finds_DiagnosticResult_On_Method_In_Struct(string visibility)
+        {
+            string test = $@"
+struct S
+{{
+    /// <summary />
+    {visibility} void M(){{}}
+}}";
+
+            await Verify.VerifyAnalyzerAsync(test, Verify.Diagnostic(RuleId).WithSpan(4, 9, 4, 20));
+        }
 
         [Theory]
         [InlineData("public")]
