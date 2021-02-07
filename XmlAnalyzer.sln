@@ -9,6 +9,8 @@ EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers", "Analyzers\Analyzers.csproj", "{C3B17A6E-BFDD-4185-8DEB-B76E8685E394}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0282D19C-1D45-4D06-9B7A-16BEEB65168E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,5 +25,8 @@ Global
 		{C3B17A6E-BFDD-4185-8DEB-B76E8685E394}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3B17A6E-BFDD-4185-8DEB-B76E8685E394}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C3B17A6E-BFDD-4185-8DEB-B76E8685E394}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DC20AEAF-DD3F-44C6-87E6-133198CB42C3} = {0282D19C-1D45-4D06-9B7A-16BEEB65168E}
 	EndGlobalSection
 EndGlobal
