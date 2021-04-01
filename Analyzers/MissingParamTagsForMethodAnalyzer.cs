@@ -14,29 +14,19 @@ namespace Analyzers
     /// defined.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class NoXmlCommentAnalyzer : DiagnosticAnalyzer
+    public class MissingParamTagsForMethodAnalyzer : DiagnosticAnalyzer
     {
-        private const string Title = "Missing XML Comment.";
-        private const string MessageFormat = "Element needs to have an xml comment.";
-        private const string Description = "Missing XML Comment.";
-        public const string RuleId = "XmlMissing100";
+        private const string Title = "Missing XML param xml comment.";
+        private const string MessageFormat = "Method needs to have an xml comment for the paramether of a method.";
+        private const string Description = "Missing XML param xml comment.";
+        public const string RuleId = "XmlParamMissing100";
 
         private static readonly SyntaxKind[] CheckingNodes =
         {
-            SyntaxKind.ClassDeclaration,
             SyntaxKind.MethodDeclaration,
-            SyntaxKind.PropertyDeclaration,
             SyntaxKind.ConstructorDeclaration,
-            SyntaxKind.EnumDeclaration,
-            SyntaxKind.EnumMemberDeclaration,
             SyntaxKind.IndexerDeclaration,
-            SyntaxKind.OperatorDeclaration,
-            SyntaxKind.StructDeclaration,
-            SyntaxKind.DestructorDeclaration,
-            SyntaxKind.EventFieldDeclaration,
-            SyntaxKind.EventDeclaration,
-            SyntaxKind.DelegateDeclaration,
-            SyntaxKind.InterfaceDeclaration
+            SyntaxKind.OperatorDeclaration
         };
 
         private static readonly DiagnosticDescriptor Rule = new(
@@ -68,7 +58,6 @@ namespace Analyzers
 
                     if (!syntaxNode.HasLeadingTrivia)
                     {
-                        ReportOnIdentifierToken(syntaxNode, startCodeBlockContext);
                         return;
                     }
 
@@ -78,7 +67,6 @@ namespace Analyzers
 
                     if (xmlComment == default)
                     {
-                        ReportOnIdentifierToken(syntaxNode, startCodeBlockContext);
                         return;
                     }
 
@@ -87,35 +75,55 @@ namespace Analyzers
                     bool allTextElements = comment!.Content.All(element => element is XmlTextSyntax);
                     if (allTextElements)
                     {
-                        ReportOnIdentifierToken(syntaxNode, startCodeBlockContext);
+                        return;
+                    }
+
+                    IReadOnlyList<ParameterSyntax> parameters = GetParameterNames(syntaxNode);
+
+                    if (parameters.Count == 0)
+                    {
+                        return;
+                    }
+                    
+                    bool hasInheritDoc = comment!.Content.Any(node => string.Equals((node as XmlEmptyElementSyntax)?.Name.ToString(), "inheritdoc", StringComparison.InvariantCultureIgnoreCase));
+                    if (hasInheritDoc)
+                    {
+                        return;
+                    }
+                    
+                    IEnumerable<XmlNodeSyntax> paramTags = comment!.Content.Where(node => string.Equals((node as XmlElementSyntax)?.StartTag.Name.ToString(), "param", StringComparison.InvariantCultureIgnoreCase));
+                    List<string> paramTagNameValues = paramTags.Select(tag =>
+                        (((XmlElementSyntax) tag).StartTag.Attributes.FirstOrDefault(attribute =>
+                            attribute.Name.ToString() == "name") as XmlNameAttributeSyntax)?.Identifier.ToString())
+                        .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                        .ToList();
+
+                    IEnumerable<ParameterSyntax> missingParamTexts = parameters.Where(parameter => !paramTagNameValues.Any(paramValue => string.Equals(paramValue, parameter.Identifier.Text, StringComparison.InvariantCultureIgnoreCase)));
+                    foreach (ParameterSyntax missingParamText in missingParamTexts)
+                    {
+                        ReportOnIdentifierToken(missingParamText, startCodeBlockContext);
                     }
                 },
                 CheckingNodes
             );
         }
 
+        private IReadOnlyList<ParameterSyntax> GetParameterNames(SyntaxNode syntaxNode)
+        {
+            return syntaxNode switch
+            {
+                MethodDeclarationSyntax methodDeclarationSyntax => methodDeclarationSyntax.ParameterList.Parameters,
+                ConstructorDeclarationSyntax constructorDeclarationSyntax => constructorDeclarationSyntax.ParameterList.Parameters,
+                OperatorDeclarationSyntax operatorDeclarationSyntax => operatorDeclarationSyntax.ParameterList.Parameters,
+                IndexerDeclarationSyntax indexerDeclarationSyntax => indexerDeclarationSyntax.ParameterList.Parameters,
+                _ => throw new InvalidOperationException($"Invalid syntax node {syntaxNode.GetType()}")
+            };
+        }
+
         private static void ReportOnIdentifierToken(SyntaxNode syntaxNode,
             SyntaxNodeAnalysisContext startCodeBlockContext)
         {
-            IEnumerable<SyntaxToken> childTokens = syntaxNode.ChildTokens();
-            SyntaxToken identifierToken = childTokens
-                .FirstOrDefault(token => token.IsKind(SyntaxKind.IdentifierToken));
-
-            if (identifierToken == default)
-            {
-                identifierToken = syntaxNode switch
-                {
-                    BaseFieldDeclarationSyntax baseFieldDeclaration => baseFieldDeclaration.Declaration.Variables
-                        .First()
-                        .Identifier,
-                    IndexerDeclarationSyntax indexerDeclarationSyntax => indexerDeclarationSyntax.ThisKeyword,
-                    OperatorDeclarationSyntax operatorDeclarationSyntax => operatorDeclarationSyntax.OperatorKeyword,
-                    _ => throw new NotSupportedException($"'{syntaxNode}' cannot be analysed.")
-                };
-            }
-
-            Diagnostic diagnostic = Diagnostic.Create(Rule,
-                identifierToken.GetLocation());
+            Diagnostic diagnostic = Diagnostic.Create(Rule, syntaxNode.GetLocation());
             startCodeBlockContext.ReportDiagnostic(diagnostic);
         }
 
@@ -160,12 +168,10 @@ namespace Analyzers
                 return attributeList.Attributes.Any(attribute =>
                 {
                     string attributeName = attribute.Name.ToString();
-                    return IgnoredAttributes.Contains(attributeName);
+                    return attributeName == "Fact" || attributeName == "Theory";
                 });
             });
         }
-
-        private static readonly string[] IgnoredAttributes = {"Fact", "Theory", "Given", "When", "Then"};
 
         private bool IsEnumMember(SyntaxNode syntaxNode)
         {
