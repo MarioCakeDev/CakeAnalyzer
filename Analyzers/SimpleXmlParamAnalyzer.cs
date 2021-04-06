@@ -55,8 +55,8 @@ namespace Analyzers
             DocumentationCommentTriviaSyntax syntaxNode = (DocumentationCommentTriviaSyntax) startCodeBlockContext.Node;
 
             IEnumerable<XmlElementSyntax> paramTags = GetParamXmlTags(syntaxNode);
-
-            Regex whitespace = new("\\s", RegexOptions.Multiline);
+            
+            Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
             Regex xmlCommentTokens = new("(///|\\*)", RegexOptions.Multiline);
             Regex ofFromThe = new("\\b(of|from|the)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
             foreach (XmlElementSyntax paramTag in paramTags)
@@ -71,7 +71,7 @@ namespace Analyzers
 
                 string comment = xmlCommentTokens.Replace(paramTag.Content.ToString(), "");
                 comment = ofFromThe.Replace(comment, "");
-                string contentWithoutWhitespace = whitespace.Replace(comment, "");
+                string contentWithoutWhitespace = invalidIdentifierChars.Replace(comment, "");
 
                 if (string.Equals(contentWithoutWhitespace, parameterName, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -94,7 +94,7 @@ namespace Analyzers
                 }
 
                 commentParts[commentParts.Length - 1] = firstPart;
-                contentWithoutWhitespace = whitespace.Replace(string.Join("", commentParts), "");
+                contentWithoutWhitespace = invalidIdentifierChars.Replace(string.Join("", commentParts), "");
                 
                 if (string.Equals(contentWithoutWhitespace, parameterName, StringComparison.InvariantCultureIgnoreCase))
                 {

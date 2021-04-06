@@ -15,15 +15,15 @@ namespace Analyzers
     /// tag exactly the parameter name.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class SummaryContentEqualsElementNameAnalyzer : DiagnosticAnalyzer
+    public class PropertySummaryIsGetsOrSetsAnalyzer : DiagnosticAnalyzer
     {
-        private const string Title = "Summary is too simple.";
+        private const string Title = "Property summary is just gets or sets.";
 
         private const string MessageFormat =
-            "Summary of an element should not only contain the name of the element.";
+            "Summary of a property or field should not only say that it gets or sets the property/field.";
 
-        private const string Description = "Summary is too simple.";
-        public const string RuleId = "XmlSummaryTagTooSimple100";
+        private const string Description = "Property summary is just gets or sets.";
+        public const string RuleId = "XmlPropertySummaryTooSimple100";
 
         private static readonly DiagnosticDescriptor Rule = new(
             RuleId,
@@ -41,27 +41,8 @@ namespace Analyzers
         
         private static readonly SyntaxKind[] CheckingNodes =
         {
-            SyntaxKind.ClassDeclaration,
-            SyntaxKind.EnumDeclaration,
-            SyntaxKind.InterfaceDeclaration,
-            SyntaxKind.StructDeclaration,
-            
-            SyntaxKind.EventFieldDeclaration,
             SyntaxKind.FieldDeclaration,
-            
-            SyntaxKind.PropertyDeclaration,
-            
-            SyntaxKind.MethodDeclaration,
-            
-            SyntaxKind.ConstructorDeclaration,
-            
-            SyntaxKind.DestructorDeclaration,
-            
-            SyntaxKind.EnumMemberDeclaration,
-            
-            SyntaxKind.EventDeclaration,
-            
-            SyntaxKind.DelegateDeclaration
+            SyntaxKind.PropertyDeclaration
         };
 
         /// <inheritdoc />
@@ -115,9 +96,9 @@ namespace Analyzers
             IEnumerable<SyntaxNode> syntaxNodesWithoutStartAndEnd = summaryNode.ChildNodes().Skip(1).Reverse().Skip(1).Reverse();
 
             Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
-            Regex ofFromThe = new("\\b(of|from|the)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex getsOrAndSets = new("\\b(gets?|sets?|and|or|the|of|from)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
             IEnumerable<string> onlyTextTokens = syntaxNodesWithoutStartAndEnd.Select(x => x as XmlTextSyntax)
-                .Select(x => string.Join("", x.TextTokens.Select(c => invalidIdentifierChars.Replace(ofFromThe.Replace(c.Text, ""), ""))).Trim());
+                .Select(x => string.Join("", x.TextTokens.Select(c => invalidIdentifierChars.Replace(getsOrAndSets.Replace(c.Text, ""), ""))).Trim());
             string content = string.Join("", onlyTextTokens).Trim();
 
             string elementName = GetElementName(syntaxNode);
@@ -134,7 +115,7 @@ namespace Analyzers
                         .Select(x =>
                             string.Join("",
                                 x.TextTokens.Select(
-                                    c => ofFromThe.Replace(c.Text, "").Trim()
+                                    c => getsOrAndSets.Replace(c.Text, "").Trim()
                                 )
                             ))).Split(' ', '\t', '\n');
 
