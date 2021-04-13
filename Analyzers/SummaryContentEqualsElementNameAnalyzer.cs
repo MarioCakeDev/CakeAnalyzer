@@ -115,7 +115,7 @@ namespace Analyzers
             IEnumerable<SyntaxNode> syntaxNodesWithoutStartAndEnd = summaryNode.ChildNodes().Skip(1).Reverse().Skip(1).Reverse();
 
             Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
-            Regex ofFromThe = new("\\b(of|from|the)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex ofFromThe = new("\\b(of|from|the|an?)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
             IEnumerable<string> onlyTextTokens = syntaxNodesWithoutStartAndEnd.Select(x => x as XmlTextSyntax)
                 .Select(x => string.Join("", x.TextTokens.Select(c => invalidIdentifierChars.Replace(ofFromThe.Replace(c.Text, ""), ""))).Trim());
             string content = string.Join("", onlyTextTokens).Trim();

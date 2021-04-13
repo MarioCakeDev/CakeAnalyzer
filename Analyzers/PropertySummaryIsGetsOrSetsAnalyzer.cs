@@ -96,7 +96,7 @@ namespace Analyzers
             IEnumerable<SyntaxNode> syntaxNodesWithoutStartAndEnd = summaryNode.ChildNodes().Skip(1).Reverse().Skip(1).Reverse();
 
             Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
-            Regex getsOrAndSets = new("\\b(gets?|sets?|and|or|the|of|from)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex getsOrAndSets = new("\\b(gets?|sets?|and|or|the|of|from|an?)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
             IEnumerable<string> onlyTextTokens = syntaxNodesWithoutStartAndEnd.Select(x => x as XmlTextSyntax)
                 .Select(x => string.Join("", x.TextTokens.Select(c => invalidIdentifierChars.Replace(getsOrAndSets.Replace(c.Text, ""), ""))).Trim());
             string content = string.Join("", onlyTextTokens).Trim();

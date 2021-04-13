@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -10,16 +11,19 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzers
 {
     /// <summary>
-    /// Analyzer which checks that all declaration types defined in <see cref="CheckingNodes"/> have xml comments
-    /// defined.
+    /// Checks whether the param tag contains a parameter which is too simple by comparing that the value of the xml
+    /// tag exactly the parameter name.
     /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class MissingParamTagsForMethodAnalyzer : DiagnosticAnalyzer
+    public class SimpleXmlParamTypeAnalyzer : DiagnosticAnalyzer
     {
-        private const string Title = "Missing XML param xml comment.";
-        private const string MessageFormat = "Method needs to have an xml comment for the paramether of a method.";
-        private const string Description = "Missing XML param xml comment.";
-        public const string RuleId = "XmlParamMissing100";
+        private const string Title = "Parameter is too simple.";
+
+        private const string MessageFormat =
+            "Param tag in XML comment is not allowed to be a form of the type name itself.";
+
+        private const string Description = "Parameter is too simple.";
+        public const string RuleId = "XmlParameterTagTooSimpleByType100";
 
         private static readonly SyntaxKind[] CheckingNodes =
         {
@@ -78,7 +82,7 @@ namespace Analyzers
                         return;
                     }
 
-                    IReadOnlyList<ParameterSyntax> parameters = GetParameterNames(syntaxNode);
+                    IReadOnlyList<ParameterSyntax> parameters = GetParameters(syntaxNode);
 
                     if (parameters.Count == 0)
                     {
@@ -92,23 +96,65 @@ namespace Analyzers
                     }
                     
                     IEnumerable<XmlNodeSyntax> paramTags = comment!.Content.Where(node => string.Equals((node as XmlElementSyntax)?.StartTag.Name.ToString(), "param", StringComparison.InvariantCultureIgnoreCase));
-                    List<string> paramTagNameValues = paramTags.Select(tag =>
-                        (((XmlElementSyntax) tag).StartTag.Attributes.FirstOrDefault(attribute =>
-                            attribute.Name.ToString() == "name") as XmlNameAttributeSyntax)?.Identifier.ToString())
-                        .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                    List<XmlElementSyntax> paramTagNameValues = paramTags
+                        .Select(tag => (XmlElementSyntax)tag)
                         .ToList();
 
-                    IEnumerable<ParameterSyntax> missingParamTexts = parameters.Where(parameter => !paramTagNameValues.Any(paramValue => string.Equals(paramValue, parameter.Identifier.Text.TrimStart('@'), StringComparison.InvariantCultureIgnoreCase)));
-                    foreach (ParameterSyntax missingParamText in missingParamTexts)
+                    Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
+                    Regex xmlCommentTokens = new("(///|\\*)", RegexOptions.Multiline);
+                    Regex ofFromThe = new("\\b(of|from|the|an?)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                    
+                    IEnumerable<(ParameterSyntax parameter, XmlElementSyntax tag)> parameterTagMap = parameters.Join(
+                            paramTagNameValues,
+                            parameter => parameter.Identifier.Text.ToLower(),
+                            tag => (tag.StartTag.Attributes.FirstOrDefault(attribute =>
+                                attribute.Name.ToString() == "name") as XmlNameAttributeSyntax)?.Identifier.ToString(),
+                            (parameter, tag) => (parameter, tag)
+                        )
+                        .Where(tuple =>
+                        {
+                            (ParameterSyntax parameter, XmlElementSyntax tag) = tuple;
+                            string parameterType = parameter.Type!.ToString();
+                            
+                            string paramTagComment = xmlCommentTokens.Replace(tag.Content.ToString(), "");
+                            paramTagComment = ofFromThe.Replace(paramTagComment, "");
+                            string contentWithoutWhitespace = invalidIdentifierChars.Replace(paramTagComment, "");
+
+                            if (string.Equals(contentWithoutWhitespace, parameterType, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                return true;
+                            }
+
+                            string[] commentParts = paramTagComment.Trim().Split(' ', '\t', '\n');
+
+                            if (commentParts.Length == 1)
+                            {
+                                return false;
+                            }
+
+                            string firstPart = commentParts[0];
+                            for (int i = 1; i < commentParts.Length; i++)
+                            {
+                                commentParts[i - 1] = commentParts[i];
+                            }
+
+                            commentParts[commentParts.Length - 1] = firstPart;
+                            contentWithoutWhitespace = invalidIdentifierChars.Replace(string.Join("", commentParts), "");
+                
+                            return string.Equals(contentWithoutWhitespace, parameterType, StringComparison.InvariantCultureIgnoreCase);
+                        });
+
+                    foreach ((ParameterSyntax _, XmlElementSyntax tag) in parameterTagMap)
                     {
-                        ReportOnIdentifierToken(missingParamText, startCodeBlockContext);
+                        Diagnostic diagnostic = Diagnostic.Create(Rule, tag.GetLocation());
+                        startCodeBlockContext.ReportDiagnostic(diagnostic);
                     }
                 },
                 CheckingNodes
             );
         }
 
-        private IReadOnlyList<ParameterSyntax> GetParameterNames(SyntaxNode syntaxNode)
+        private IReadOnlyList<ParameterSyntax> GetParameters(SyntaxNode syntaxNode)
         {
             return syntaxNode switch
             {

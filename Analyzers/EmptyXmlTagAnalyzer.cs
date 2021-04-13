@@ -63,7 +63,8 @@ namespace Analyzers
             {
                 if (element is XmlEmptyElementSyntax emptyElement)
                 {
-                    return emptyElement.Name.LocalName.ToString() == "inheritdoc"
+                    string tagName = emptyElement.Name.LocalName.ToString();
+                    return tagName == "inheritdoc" || tagName == "seealso"
                         ? new XmlNodeSyntax[0]
                         : new[] {emptyElement};
                 }

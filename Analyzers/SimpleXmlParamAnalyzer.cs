@@ -58,7 +58,7 @@ namespace Analyzers
             
             Regex invalidIdentifierChars = new("[^a-zA-Z0-9_]", RegexOptions.Multiline);
             Regex xmlCommentTokens = new("(///|\\*)", RegexOptions.Multiline);
-            Regex ofFromThe = new("\\b(of|from|the)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            Regex ofFromThe = new("\\b(of|from|the|an?)\\b", RegexOptions.Multiline | RegexOptions.IgnoreCase);
             foreach (XmlElementSyntax paramTag in paramTags)
             {
                 string parameterName = (paramTag.StartTag.Attributes.FirstOrDefault(
